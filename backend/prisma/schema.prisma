@@ -1,0 +1,37 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "cjs"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [postgis]
+}
+
+/// Zone géographique de référence (ex. périmètre du Stade Abdoulaye Wade).
+model PointOfInterest {
+  id        String                                 @id @default(uuid())
+  name      String                                 @unique
+  boundary  Unsupported("geometry(Polygon, 4326)")
+  createdAt DateTime                               @default(now())
+  updatedAt DateTime                               @updatedAt
+
+  @@index([boundary], type: Gist)
+}
+
+/// Émargement d'un volontaire : un seul par volontaire et par jour.
+model Attendance {
+  id            String                               @id @default(uuid())
+  volunteerCode String
+  /// Date du jour côté serveur (jamais fournie par le client).
+  date          DateTime                             @db.Date
+  photoUrl      String
+  signatureUrl  String
+  location      Unsupported("geometry(Point, 4326)")
+  createdAt     DateTime                             @default(now())
+
+  @@unique([volunteerCode, date])
+  @@index([location], type: Gist)
+}
