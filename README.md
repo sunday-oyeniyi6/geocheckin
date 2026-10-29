@@ -26,29 +26,29 @@ GeoCheckin est une application web progressive (PWA) open-source conçue pour fa
 ## ⚙️ Installation et Lancement (Environnement Local)
 
 **1. Cloner le dépôt**
-\`\`\`bash
-git clone <https://github.com/votre-user/geocheckin.git>
+```bash
+git clone https://github.com/sunday-oyeniyi6/geocheckin.git
 cd geocheckin
-\`\`\`
+```
 
 **2. Configurer les variables d'environnement**
 Copiez le fichier d'exemple et ajustez les variables si nécessaire :
-\`\`\`bash
+```bash
 cp .env.example .env
-\`\`\`
+```
 
 **3. Démarrer la base de données (PostGIS)**
-\`\`\`bash
+```bash
 docker-compose up -d db
-\`\`\`
+```
 
 **4. Initialiser Prisma et la Base de données**
-\`\`\`bash
+```bash
 cd backend
 npm install
 npx prisma generate
 npx prisma db push
-\`\`\`
+```
 
 **5. Lancer l'application**
 

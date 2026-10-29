@@ -28,3 +28,22 @@ Le système gère des émargements instantanés et sécurisés. Il traite et val
 - Privilégier une approche Mobile-First stricte pour le frontend.
 - Les requêtes de validation spatiale dans le backend NestJS doivent utiliser des requêtes brutes PostGIS (`ST_Contains` ou `ST_DWithin`) via `$queryRaw` de Prisma.
 - Fournir du code en TypeScript avec un typage strict.
+
+**Workflow Git (Règles pour l'IA) :**
+
+- Ne jamais faire de `commit` ni de `push` soi-même. À la fin de chaque tâche, fournir le message de commit proposé.
+- Ne jamais travailler directement sur la branche `develop`. Toujours créer une nouvelle branche avant de commencer, et demander le numéro de l'issue GitHub associée à la fonctionnalité/tâche.
+
+### Convention de nommage des branches
+
+| Type                   | Pattern                   | Exemple                         |
+| ---------------------- | ------------------------- | ------------------------------- |
+| Issue GitHub numérotée | `feature/geocheckin#XX`   | `feature/geocheckin#12`         |
+| Correctif ciblé        | `feature/fix-description` | `feature/fix-geofencing-radius` |
+| Fonctionnalité         | `feature/description`     | `feature/badge-photo-capture`   |
+
+## Tests et couverture
+
+```bash
+npm test                # tests unitaires Jest
+```
