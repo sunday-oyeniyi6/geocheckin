@@ -21,17 +21,31 @@ model PointOfInterest {
   @@index([boundary], type: Gist)
 }
 
+/// Volontaire inscrit dans GeoCheckin (registre propre, sans lien avec la plateforme officielle).
+model Volunteer {
+  id          String       @id @default(uuid())
+  /// Code volontaire, format 012346-00.
+  code        String       @unique
+  firstName   String
+  lastName    String
+  /// Mobile sénégalais au format E.164 (+221XXXXXXXXX).
+  phone       String       @unique
+  createdAt   DateTime     @default(now())
+  attendances Attendance[]
+}
+
 /// Émargement d'un volontaire : un seul par volontaire et par jour.
 model Attendance {
-  id            String                               @id @default(uuid())
-  volunteerCode String
-  /// Date du jour côté serveur (jamais fournie par le client).
-  date          DateTime                             @db.Date
-  photoUrl      String
-  signatureUrl  String
-  location      Unsupported("geometry(Point, 4326)")
-  createdAt     DateTime                             @default(now())
+  id           String                               @id @default(uuid())
+  volunteerId  String
+  volunteer    Volunteer                            @relation(fields: [volunteerId], references: [id])
+  /// Date du jour côté serveur, fuseau Africa/Dakar (jamais fournie par le client).
+  date         DateTime                             @db.Date
+  photoUrl     String
+  signatureUrl String
+  location     Unsupported("geometry(Point, 4326)")
+  createdAt    DateTime                             @default(now())
 
-  @@unique([volunteerCode, date])
+  @@unique([volunteerId, date])
   @@index([location], type: Gist)
 }

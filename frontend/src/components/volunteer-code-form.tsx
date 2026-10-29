@@ -1,21 +1,51 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { genericErrorMessage, login } from "@/lib/api";
+import { VOLUNTEER_CODE_REGEX, formatVolunteerCodeInput } from "@/lib/formats";
+import {
+  errorTextClass,
+  inputClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from "./ui";
 
-/**
- * Saisie du code volontaire.
- * Placeholder : l'authentification sera branchée dans une issue dédiée.
- */
+type Status =
+  | { kind: "idle" }
+  | { kind: "submitting" }
+  | { kind: "not_found"; code: string }
+  | { kind: "error"; message: string };
+
+/** Connexion par code volontaire ; propose l'inscription si aucun compte n'existe. */
 export function VolunteerCodeForm() {
+  const router = useRouter();
   const [code, setCode] = useState("");
-  const trimmed = code.trim();
+  const [touched, setTouched] = useState(false);
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const isValid = VOLUNTEER_CODE_REGEX.test(code);
+  const showFormatError = touched && code.length > 0 && !isValid;
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setTouched(true);
+    if (!isValid) return;
+
+    setStatus({ kind: "submitting" });
+    const result = await login(code);
+    if (result.ok) {
+      router.push("/checkin");
+    } else if (result.error.kind === "not_found") {
+      setStatus({ kind: "not_found", code });
+    } else {
+      setStatus({ kind: "error", message: genericErrorMessage(result.error) });
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
       <label htmlFor="volunteer-code" className="text-sm font-medium">
         Code volontaire
       </label>
@@ -23,22 +53,57 @@ export function VolunteerCodeForm() {
         id="volunteer-code"
         name="volunteerCode"
         type="text"
-        inputMode="text"
+        inputMode="numeric"
         autoComplete="off"
-        autoCapitalize="characters"
         spellCheck={false}
-        placeholder="Ex. JMB-12345"
+        maxLength={9}
+        placeholder="012346-00"
         value={code}
-        onChange={(event) => setCode(event.target.value.toUpperCase())}
-        className="h-14 rounded-xl border border-zinc-300 bg-transparent px-4 text-lg tracking-wider outline-none focus:border-brand focus:ring-2 focus:ring-brand/30 dark:border-zinc-700"
+        aria-invalid={showFormatError}
+        aria-describedby={showFormatError ? "volunteer-code-error" : undefined}
+        onChange={(event) => {
+          setCode(formatVolunteerCodeInput(event.target.value));
+          setStatus({ kind: "idle" });
+        }}
+        onBlur={() => setTouched(true)}
+        className={`${inputClass} tracking-widest`}
       />
+      {showFormatError && (
+        <p id="volunteer-code-error" className={errorTextClass}>
+          Le code doit être au format 012346-00.
+        </p>
+      )}
+
       <button
         type="submit"
-        disabled={trimmed.length === 0}
-        className="h-14 rounded-xl bg-brand text-lg font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
+        disabled={!isValid || status.kind === "submitting"}
+        className={primaryButtonClass}
       >
-        Continuer
+        {status.kind === "submitting" ? "Vérification…" : "Continuer"}
       </button>
+
+      {status.kind === "error" && (
+        <p role="alert" className={errorTextClass}>
+          {status.message}
+        </p>
+      )}
+
+      {status.kind === "not_found" && (
+        <div
+          role="alert"
+          className="flex flex-col gap-3 rounded-xl bg-zinc-100 p-4 dark:bg-zinc-900"
+        >
+          <p>
+            Aucun compte pour le code <strong>{status.code}</strong>.
+          </p>
+          <Link
+            href={`/inscription?code=${encodeURIComponent(status.code)}`}
+            className={secondaryButtonClass}
+          >
+            Créer mon compte
+          </Link>
+        </div>
+      )}
     </form>
   );
 }
