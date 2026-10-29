@@ -20,37 +20,65 @@ GeoCheckin est une application web progressive (PWA) open-source conçue pour fa
 ## 📦 Prérequis
 
 - [Node.js](https://nodejs.org/) (v20+)
-- [Docker](https://www.docker.com/) et Docker Compose
+- [Docker](https://www.docker.com/) et Docker Compose v2
 - [Git](https://git-scm.com/)
+
+## 🗂️ Structure du dépôt
+
+```text
+geocheckin/
+├── backend/             # API NestJS + Prisma (PostGIS)
+├── frontend/            # PWA Next.js (App Router) + Tailwind CSS
+├── docker-compose.yml   # Base PostgreSQL + PostGIS
+└── .env.example         # Variables d'environnement (un seul .env à la racine)
+```
 
 ## ⚙️ Installation et Lancement (Environnement Local)
 
 **1. Cloner le dépôt**
+
 ```bash
 git clone https://github.com/sunday-oyeniyi6/geocheckin.git
 cd geocheckin
 ```
 
 **2. Configurer les variables d'environnement**
-Copiez le fichier d'exemple et ajustez les variables si nécessaire :
+
+Un seul fichier `.env` à la racine est utilisé par Docker, le backend et le frontend :
+
 ```bash
 cp .env.example .env
 ```
 
+> PostGIS est exposé sur le port `5433` pour ne pas entrer en conflit avec un PostgreSQL local.
+
 **3. Démarrer la base de données (PostGIS)**
+
 ```bash
-docker-compose up -d db
+docker compose up -d db
+docker compose exec db psql -U geocheckin -d geocheckin -c "SELECT PostGIS_Version();"
 ```
 
-**4. Initialiser Prisma et la Base de données**
+**4. Initialiser Prisma et la base de données**
+
 ```bash
 cd backend
-npm install
-npx prisma generate
-npx prisma db push
+npm install          # lance aussi `prisma generate` (postinstall)
+npx prisma db push   # crée les tables PointOfInterest et Attendance
 ```
 
 **5. Lancer l'application**
 
-- **Backend (NestJS) :** `npm run start:dev` (dans le dossier `/backend`)
-- **Frontend (Next.js) :** `npm run dev` (dans le dossier `/frontend` après un `npm install`)
+- **Backend (NestJS) :** `npm run start:dev` dans `/backend` → <http://localhost:3001/health>
+- **Frontend (Next.js) :** `npm install && npm run dev` dans `/frontend` → <http://localhost:3000>
+
+## 🧪 Tests et qualité
+
+| Commande                | Backend | Frontend | Description                            |
+| ----------------------- | :-----: | :------: | -------------------------------------- |
+| `npm test`              |   ✅    |    ✅    | Tests unitaires Jest                   |
+| `npm run test:e2e`      |   ✅    |          | Tests e2e (nécessite la base démarrée) |
+| `npm run test:cov`      |   ✅    |    ✅    | Couverture de code                     |
+| `npm run lint`          |   ✅    |    ✅    | ESLint                                 |
+| `npm run typecheck`     |         |    ✅    | Vérification TypeScript                |
+| `npm run build`         |   ✅    |    ✅    | Build de production                    |
